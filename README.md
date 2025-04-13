@@ -1,136 +1,118 @@
-# Redactly - AI-Powered Document Redaction
+# Redactly Vue Nexus - AI Document Redaction
 
-Redactly is a secure, full-stack web application that uses AI to detect and redact sensitive data (PII/PHI) from documents such as DOCX and PDF. The tool supports multiple redaction levels, provides review and verification with confidence scores and annotations, and ensures full compliance with on-premises security standards.
+This project is a web application built with React (using Vite), TypeScript, and Tailwind CSS (via Shadcn UI) designed for uploading, viewing, and redacting sensitive information from PDF and DOCX documents.
 
 ## Features
 
-### Intelligent Redaction Engine
-- **Detection & Redaction**
-  - Named Entity Recognition using spaCy
-  - Context-aware AI detection using Ollama
-  - Regex-based pattern matching
-  - Custom AI models for different industries
+*   **Document Upload:** Supports uploading PDF and DOCX files via drag-and-drop or file selection.
+*   **Document Preview:** Renders PDF documents using `pdf.js` directly in the browser.
+*   **Text Extraction:** Extracts text content from both PDF (`pdf.js`) and DOCX (`mammoth.js`) files.
+*   **Basic Entity Recognition:** Uses regular expressions to identify potential emails, phone numbers, and URLs (`DocumentService`).
+*   **(Planned) AI-Powered Redaction:** Intended to integrate with an AI service (`AIService`) to detect various categories of sensitive data (PII, Financial, Dates).
+*   **Redaction Controls:** Allows users to configure redaction mode (blackout, de-identify), AI sensitivity, and specific data categories.
+*   **Redaction Review:** Provides a panel to review individual redactions suggested by the AI, approve/reject them, and add annotations.
+*   **Theming:** Includes basic light/dark theme toggling.
 
-- **Redaction Levels**
-  - Blackout: Completely remove sensitive data
-  - De-identification: Anonymize PII for research use
+## Project Structure
 
-### Review & Verification
-- Automatic confidence scoring for each redaction
-- Manual review workflow for low-confidence redactions
-- Highlighting and annotations for redacted sections
-- Approval/rejection system for redactions
-
-### Compliance & Security
-- On-premises deployment
-- Detailed audit logs
-- Version control
-- Compliance tracking
-
-### Document Handling
-- Support for DOCX and PDF documents
-- OCR capabilities using Tesseract.js
-- Text extraction and processing
-- Responsive preview interface
-
-## Technical Stack
-
-### Frontend
-- React.js with TypeScript
-- Vite for build tooling
-- Tailwind CSS for styling
-- shadcn/ui components
-- React Query for state management
-
-### Backend Services
-- Document Processing Service
-  - PDF.js for PDF handling
-  - Mammoth.js for DOCX processing
-  - Tesseract.js for OCR
-  - spaCy for NLP
-
-- AI Service
-  - Ollama for AI-powered detection
-  - Custom redaction models
-  - Confidence scoring
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Ollama (for AI capabilities)
-- Python 3.8+ (for spaCy)
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/redactly-vue-nexus.git
-cd redactly-vue-nexus
+```
+/src
+├── components/         # Reusable UI components (Upload, Preview, Controls, Panel, Shadcn UI components)
+│   ├── ui/             # Shadcn UI components
+│   └── ...
+├── context/            # React context providers (e.g., ThemeContext)
+├── hooks/              # Custom React hooks (e.g., useDocumentProcessor)
+├── services/           # Business logic and external interactions (DocumentService, AIService)
+├── App.tsx             # Main application component, state management
+├── main.tsx            # Application entry point
+└── index.css           # Global styles (Tailwind)
+public/                 # Static assets (e.g., pdf.js worker)
+README.md               # This file
+package.json            # Project dependencies and scripts
+tailwind.config.js      # Tailwind CSS configuration
+tsconfig.json           # TypeScript configuration
+vite.config.ts          # Vite configuration
 ```
 
-2. Install dependencies:
-```bash
-npm install
-```
+## Key Dependencies
 
-3. Set up Ollama:
-```bash
-# Install Ollama
-curl -fsSL https://ollama.com/install.sh | sh
+*   **React:** Frontend library
+*   **Vite:** Build tool and development server
+*   **TypeScript:** Strongly typed JavaScript
+*   **Tailwind CSS:** Utility-first CSS framework
+*   **Shadcn UI:** Reusable UI components built with Radix UI and Tailwind CSS
+*   **pdfjs-dist:** Library for parsing and rendering PDF files (`pdf.js`)
+*   **mammoth:** Library for converting DOCX files to HTML/text
+*   **tesseract.js:** OCR library (used in `DocumentService`, potentially for images/scanned PDFs)
+*   **react-dropzone:** Hook for creating drag-and-drop file upload zones
+*   **sonner:** Toast notification library
 
-# Pull the required model
-ollama pull llama2
-```
+## Setup and Running
 
-4. Set up spaCy:
-```bash
-pip install spacy
-python -m spacy download en_core_web_sm
-```
+1.  **Clone the repository using Git:**
+    Open your terminal or command prompt and run:
+    ```bash
+    git clone <repository-url> # Replace <repository-url> with the actual URL
+    cd redactly-vue-nexus
+    ```
 
-5. Start the development server:
-```bash
-npm run dev
-```
+2.  **Install Node.js Dependencies:**
+    This project uses Node.js and npm (or yarn) to manage frontend dependencies.
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
 
-## Usage
+3.  **(Optional/Planned) Setup Python Environment for AI Backend:**
+    *This project is designed to eventually integrate with backend AI services, potentially written in Python and using libraries like spaCy for advanced NLP tasks. While the frontend can run without this backend for basic document viewing and structure, setting up the Python environment is necessary for full AI redaction capabilities (if/when implemented).*
 
-1. Upload a document (PDF or DOCX)
-2. Configure redaction settings:
-   - Select redaction mode (blackout or de-identification)
-   - Adjust sensitivity level
-   - Choose which types of data to redact
-3. Review and verify redactions:
-   - Check confidence scores
-   - Add annotations
-   - Approve or reject redactions
-4. Download the redacted document
+    *   **Install Python:** Ensure you have Python 3.8+ installed on your system. You can download it from [python.org](https://www.python.org/).
+    *   **Create a Virtual Environment (Recommended):**
+        ```bash
+        python -m venv venv
+        source venv/bin/activate # On Windows use `venv\Scripts\activate`
+        ```
+    *   **Install Python Modules:** If implementing or running the AI backend, you would typically install necessary modules using pip. Common requirements for NLP tasks might include:
+        ```bash
+        pip install spacy flask requests # Add other relevant Python modules as needed
+        
+        # Download necessary spaCy models (example)
+        python -m spacy download en_core_web_sm 
+        ```
+    *   *Note: The specific Python dependencies and setup steps will depend on the final implementation of the AI service backend.* 
 
-## Security Considerations
+4.  **Copy `pdf.js` worker:**
+    The application requires the `pdf.js` worker file to be available in the `public` directory for PDF rendering.
+    ```bash
+    # Ensure you are in the project root directory
+    cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/
+    ```
+    *(Note: The exact source path within `node_modules` might vary slightly based on your Node/npm/yarn setup. Verify the path if the command fails.)*
 
-- All processing happens on-premises
-- No data is sent to external servers
-- Documents are processed in memory
-- Secure handling of sensitive data
-- Audit logging for compliance
+5.  **Run the Development Server:**
+    Start the Vite development server:
+    ```bash
+    npm run dev
+    # or
+    yarn dev
+    ```
+    The application should now be running on a local port (Vite will typically output the URL, often `http://localhost:5173` or similar).
 
-## Contributing
+## Development Notes
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+*   **Services (`DocumentService`, `AIService`):** These are implemented as Singletons to manage potentially heavy resources (like the Tesseract worker) and ensure consistent state.
+*   **ArrayBuffer Handling:** Care must be taken when passing `ArrayBuffer` objects, especially to web workers (`pdf.js`). Buffers can become "detached" if transferred. The current implementation attempts to mitigate this by creating copies (`.slice(0)`) before passing buffers between different processing stages (e.g., `FileReader` -> `App` state -> `DocumentPreview`, and `File` -> `DocumentService` -> `pdf.js`).
+*   **AI Integration (`AIService`):** The `AIService` is currently a placeholder. Actual implementation would involve making API calls to a backend or directly using a client-side AI model.
+*   **Error Handling:** Basic error handling is implemented, but could be enhanced with more specific error messages and user feedback.
+*   **State Management:** Primarily uses React's `useState` and custom hooks. For larger applications, consider libraries like Zustand or Redux.
 
-## License
+## TODO / Future Enhancements
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [spaCy](https://spacy.io/) for NLP capabilities
-- [Ollama](https://ollama.ai/) for AI model hosting
-- [Tesseract.js](https://github.com/naptha/tesseract.js) for OCR
-- [PDF.js](https://mozilla.github.io/pdf.js/) for PDF processing
-- [Mammoth.js](https://github.com/mwilliamson/mammoth.js) for DOCX processing
+*   Implement the actual AI redaction logic in `AIService`.
+*   Connect the "Approve"/"Reject" buttons in `RedactionDetailsPanel` to actual state updates.
+*   Implement saving/exporting of the redacted document.
+*   Improve display and interaction with redactions directly on the `DocumentPreview` component.
+*   Add more robust error handling and reporting.
+*   Implement proper cleanup for the `DocumentService` Tesseract worker (e.g., in a top-level component unmount).
+*   Add unit and integration tests.

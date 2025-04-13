@@ -1,34 +1,58 @@
 import mammoth from 'mammoth';
-import { createWorker } from 'tesseract.js';
+import { createWorker, Worker } from 'tesseract.js';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set worker source to the local module file
+// Set worker source for pdf.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `/pdf.worker.min.mjs`;
 
+/**
+ * Represents the result of processing a document.
+ */
 export interface ProcessedDocument {
+  /** The extracted text content of the document. */
   text: string;
+  /** Metadata about the document. */
   metadata: {
+    /** The detected type of the document ('pdf' or 'docx'). */
     type: 'pdf' | 'docx';
+    /** The number of pages in the document (only applicable for PDFs). */
     pageCount?: number;
+    /** The calculated word count of the extracted text. */
     wordCount: number;
   };
+  /** An array of basic entities detected using regex (e.g., emails, phone numbers). */
   entities: Array<{
+    /** The matched entity text. */
     text: string;
+    /** The type of the entity (e.g., 'EMAIL', 'PHONE', 'URL'). */
     type: string;
+    /** The starting character index of the entity in the text. */
     start: number;
+    /** The ending character index of the entity in the text. */
     end: number;
+    /** A predefined confidence score (currently fixed at 0.95). */
     confidence: number;
   }>;
 }
 
+/**
+ * Service class for processing uploaded documents (PDF, DOCX).
+ * Handles text extraction and basic entity recognition.
+ * Implemented as a Singleton.
+ */
 export class DocumentService {
   private static instance: DocumentService;
-  private worker: any;
+  private worker: Worker | null = null;
 
+  /** Private constructor to enforce Singleton pattern. */
   private constructor() {
     this.initializeServices();
   }
 
+  /**
+   * Gets the singleton instance of the DocumentService.
+   * @returns The singleton DocumentService instance.
+   */
   public static getInstance(): DocumentService {
     if (!DocumentService.instance) {
       DocumentService.instance = new DocumentService();
@@ -36,11 +60,27 @@ export class DocumentService {
     return DocumentService.instance;
   }
 
+  /** Initializes asynchronous services like the Tesseract worker. */
   private async initializeServices() {
-    // Initialize Tesseract worker
-    this.worker = await createWorker();
+    // Initialize Tesseract worker lazily or handle potential errors
+    try {
+       console.log('Initializing Tesseract worker...');
+       this.worker = await createWorker();
+       console.log('Tesseract worker initialized.');
+    } catch (error) {
+        console.error("Failed to initialize Tesseract worker:", error);
+        // Decide how to handle this - maybe retry or disable OCR?
+        this.worker = null; // Ensure worker is null if init fails
+    }
   }
 
+  /**
+   * Processes the uploaded file based on its type (PDF or DOCX).
+   * Extracts text, calculates metadata, and performs basic entity extraction.
+   * @param file The file to process.
+   * @returns A promise resolving to the ProcessedDocument object.
+   * @throws Error if the file type is unsupported or processing fails.
+   */
   public async processDocument(file: File): Promise<ProcessedDocument> {
     const fileType = file.type;
     let text = '';
@@ -86,9 +126,16 @@ export class DocumentService {
     };
   }
 
+  /**
+   * Extracts text content and page count from a PDF file.
+   * @param file The PDF file to process.
+   * @returns A promise resolving to an object containing the extracted text and page count.
+   */
   private async processPDF(file: File): Promise<{ text: string; pageCount: number }> {
-    const arrayBuffer = await file.arrayBuffer();
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+    const originalArrayBuffer = await file.arrayBuffer();
+    // Copy the buffer to prevent detachment issues when passed to pdfjsLib
+    const arrayBufferCopy = originalArrayBuffer.slice(0);
+    const loadingTask = pdfjsLib.getDocument({ data: arrayBufferCopy }); // Use the copy
     const pdf = await loadingTask.promise;
     const pageCount = pdf.numPages;
     
@@ -106,21 +153,43 @@ export class DocumentService {
     return { text: text.trim(), pageCount };
   }
 
+  /**
+   * Extracts raw text content from a DOCX file using mammoth.
+   * @param file The DOCX file to process.
+   * @returns A promise resolving to the extracted text string.
+   */
   private async processDOCX(file: File): Promise<string> {
     const arrayBuffer = await file.arrayBuffer();
     const result = await mammoth.extractRawText({ arrayBuffer });
     return result.value;
   }
 
+  /**
+   * Performs Optical Character Recognition (OCR) on an image file using Tesseract.js.
+   * Initializes the Tesseract worker if it hasn't been already.
+   * Note: Currently not directly used in the main `processDocument` flow.
+   * @param file The image file to perform OCR on.
+   * @returns A promise resolving to the recognized text string.
+   * @throws Error if the Tesseract worker failed to initialize.
+   */
   private async performOCR(file: File): Promise<string> {
     if (!this.worker) {
+        // Attempt to initialize again if it failed previously or wasn't initialized
         await this.initializeServices();
+        if (!this.worker) { // Check again after attempting initialization
+            throw new Error("Tesseract worker is not available. OCR cannot be performed.");
+        }
     }
     const result = await this.worker.recognize(file);
     return result.data.text;
   }
 
-  private extractEntities(text: string) {
+  /**
+   * Extracts basic entities (Email, Phone, URL) from text using regular expressions.
+   * @param text The text content to search within.
+   * @returns An array of found entity objects.
+   */
+  private extractEntities(text: string): ProcessedDocument['entities'] {
     const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
     const phoneRegex = /(\+\d{1,3}[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}/g;
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -141,9 +210,16 @@ export class DocumentService {
     return entities;
   }
 
+  /**
+   * Cleans up resources, specifically terminating the Tesseract worker.
+   * Should be called when the service is no longer needed (e.g., component unmount).
+   */
   public async cleanup() {
     if (this.worker) {
+      console.log('Terminating Tesseract worker...');
       await this.worker.terminate();
+      this.worker = null; // Clear the reference
+      console.log('Tesseract worker terminated.');
     }
   }
 } 

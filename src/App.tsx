@@ -16,16 +16,29 @@ function App() {
   );
 }
 
-// We need a separate component to use the theme context
+/**
+ * Main application content component.
+ * Manages the overall application state including the selected file,
+ * redaction settings, and coordinates interactions between different components.
+ */
 function AppContent() {
+  /** State for the currently selected file object. */
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  /** State for the ArrayBuffer content of the selected file, used for preview. */
   const [fileArrayBuffer, setFileArrayBuffer] = useState<ArrayBuffer | null>(null);
+  /** State for the selected redaction mode ('blackout', 'deidentify', 'none'). */
   const [redactionMode, setRedactionMode] = useState<'blackout' | 'deidentify' | 'none'>('none');
+  /** State for the AI sensitivity level for redaction (0-100). */
   const [sensitivityLevel, setSensitivityLevel] = useState(50);
+  /** State to control visibility of PII redactions. */
   const [showPII, setShowPII] = useState(true);
+  /** State to control visibility of Financial data redactions. */
   const [showFinancial, setShowFinancial] = useState(true);
+  /** State to control visibility of Date redactions. */
   const [showDates, setShowDates] = useState(true);
+  /** State for the ID of the currently selected redaction detail. */
   const [selectedRedactionId, setSelectedRedactionId] = useState<string | null>(null);
+  /** State to store user-added annotations for specific redactions. */
   const [annotations, setAnnotations] = useState<Record<string, string[]>>({});
 
   const {
@@ -38,10 +51,16 @@ function AppContent() {
     reset
   } = useDocumentProcessor();
 
+  /** The details of the currently selected redaction, derived from redactionResult. */
   const selectedRedaction = selectedRedactionId && redactionResult?.redactions.find(
     r => r.id === selectedRedactionId
   ) || null;
 
+  /**
+   * Handles the selection of a new file.
+   * Reads the file into an ArrayBuffer for preview and potentially triggers processing.
+   * @param file The file selected by the user.
+   */
   const handleFileSelected = async (file: File) => {
     setSelectedFile(file);
     setFileArrayBuffer(null);
@@ -51,8 +70,9 @@ function AppContent() {
       const buffer = e.target?.result as ArrayBuffer;
       setFileArrayBuffer(buffer);
 
-      const processedDoc = await processDocument(file);
+      // const processedDoc = await processDocument(file);
 
+      /*
       if (processedDoc) {
         await applyRedactions({
           sensitivityLevel,
@@ -61,6 +81,7 @@ function AppContent() {
           showDates
         });
       }
+      */
     };
     reader.onerror = (e) => {
       console.error("Failed to read file:", e);
@@ -70,15 +91,29 @@ function AppContent() {
     reader.readAsArrayBuffer(file);
   };
 
+  /**
+   * Updates the redaction mode state.
+   * @param mode The new redaction mode.
+   */
   const handleRedactionModeChange = (mode: 'blackout' | 'deidentify' | 'none') => {
     setRedactionMode(mode);
   };
 
+  /**
+   * Updates the sensitivity level state and potentially triggers re-processing.
+   * @param value The new sensitivity level.
+   */
   const handleSensitivityChange = async (value: number) => {
     setSensitivityLevel(value);
-    await applyRedactions({ sensitivityLevel: value, showPII, showFinancial, showDates });
+    // await applyRedactions({ sensitivityLevel: value, showPII, showFinancial, showDates });
   };
 
+  /**
+   * Handles changes to redaction category filters (PII, Financial, Dates).
+   * Updates the corresponding state and potentially triggers re-processing.
+   * @param filter The category being toggled.
+   * @param value The new boolean value for the filter.
+   */
   const handleFilterChange = async (
     filter: 'showPII' | 'showFinancial' | 'showDates',
     value: boolean
@@ -98,17 +133,30 @@ function AppContent() {
         updatedOptions.showDates = value;
         break;
     }
-    await applyRedactions(updatedOptions);
+    // await applyRedactions(updatedOptions);
   };
 
+  /**
+   * Placeholder for approving a specific redaction.
+   * @param id The ID of the redaction to approve.
+   */
   const handleApproveRedaction = (id: string) => {
     console.log('Approved:', id);
   };
 
+  /**
+   * Placeholder for rejecting a specific redaction.
+   * @param id The ID of the redaction to reject.
+   */
   const handleRejectRedaction = (id: string) => {
     console.log('Rejected:', id);
   };
 
+  /**
+   * Adds an annotation to a specific redaction.
+   * @param id The ID of the redaction to annotate.
+   * @param annotation The annotation text to add.
+   */
   const handleAddAnnotation = (id: string, annotation: string) => {
     setAnnotations(prev => ({
       ...prev,
@@ -116,16 +164,21 @@ function AppContent() {
     }));
   };
 
-  // Handler for the process button in controls (example: re-apply redactions)
+  /**
+   * Handler triggered by the 'Process' or similar button in RedactionControls.
+   * Can be used to re-apply redactions with current settings.
+   */
   const handleReProcess = async () => {
     if (selectedFile) { // Use selectedFile as a check if processing is valid
       console.log("Re-applying redactions...");
+      /*
       await applyRedactions({ 
         sensitivityLevel, 
         showPII, 
         showFinancial, 
         showDates 
       });
+      */
     }
   };
 
