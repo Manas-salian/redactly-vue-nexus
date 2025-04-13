@@ -1,5 +1,5 @@
 import mammoth from 'mammoth';
-import { createWorker, Worker } from 'tesseract.js';
+// import { createWorker, Worker } from 'tesseract.js'; // Removed unused import
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Set worker source for pdf.js
@@ -42,11 +42,11 @@ export interface ProcessedDocument {
  */
 export class DocumentService {
   private static instance: DocumentService;
-  private worker: Worker | null = null;
+  // private worker: Worker | null = null; // Removed Tesseract worker reference
 
   /** Private constructor to enforce Singleton pattern. */
   private constructor() {
-    this.initializeServices();
+    // this.initializeServices(); // Removed Tesseract worker initialization call
   }
 
   /**
@@ -58,20 +58,6 @@ export class DocumentService {
       DocumentService.instance = new DocumentService();
     }
     return DocumentService.instance;
-  }
-
-  /** Initializes asynchronous services like the Tesseract worker. */
-  private async initializeServices() {
-    // Initialize Tesseract worker lazily or handle potential errors
-    try {
-       console.log('Initializing Tesseract worker...');
-       this.worker = await createWorker();
-       console.log('Tesseract worker initialized.');
-    } catch (error) {
-        console.error("Failed to initialize Tesseract worker:", error);
-        // Decide how to handle this - maybe retry or disable OCR?
-        this.worker = null; // Ensure worker is null if init fails
-    }
   }
 
   /**
@@ -165,26 +151,6 @@ export class DocumentService {
   }
 
   /**
-   * Performs Optical Character Recognition (OCR) on an image file using Tesseract.js.
-   * Initializes the Tesseract worker if it hasn't been already.
-   * Note: Currently not directly used in the main `processDocument` flow.
-   * @param file The image file to perform OCR on.
-   * @returns A promise resolving to the recognized text string.
-   * @throws Error if the Tesseract worker failed to initialize.
-   */
-  private async performOCR(file: File): Promise<string> {
-    if (!this.worker) {
-        // Attempt to initialize again if it failed previously or wasn't initialized
-        await this.initializeServices();
-        if (!this.worker) { // Check again after attempting initialization
-            throw new Error("Tesseract worker is not available. OCR cannot be performed.");
-        }
-    }
-    const result = await this.worker.recognize(file);
-    return result.data.text;
-  }
-
-  /**
    * Extracts basic entities (Email, Phone, URL) from text using regular expressions.
    * @param text The text content to search within.
    * @returns An array of found entity objects.
@@ -214,6 +180,7 @@ export class DocumentService {
    * Cleans up resources, specifically terminating the Tesseract worker.
    * Should be called when the service is no longer needed (e.g., component unmount).
    */
+  /* // Removed Tesseract worker cleanup
   public async cleanup() {
     if (this.worker) {
       console.log('Terminating Tesseract worker...');
@@ -222,4 +189,5 @@ export class DocumentService {
       console.log('Tesseract worker terminated.');
     }
   }
+  */
 } 

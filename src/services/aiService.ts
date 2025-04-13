@@ -1,26 +1,50 @@
 import { ProcessedDocument } from './documentService';
 
-export interface RedactionResult {
-  redactions: Array<{
-    id: string;
-    text: string;
-    type: string;
-    confidence: number;
-    start: number;
-    end: number;
-    needsReview: boolean;
-  }>;
-  redactedText: string;
+/** Represents a single identified redaction. */
+export interface RedactionItem {
+  id: string;
+  text: string;
+  type: string;
+  confidence: number;
+  start: number;
+  end: number;
+  needsReview: boolean;
+  // Add other relevant fields like page number, coordinates, etc.
 }
 
+/** Represents the output of the AI redaction detection process. */
+export interface RedactionResult {
+  /** Array of detected redaction items. */
+  redactions: Array<RedactionItem>;
+  /** The original text with redactions applied (e.g., replaced with block characters). */
+  redactedText: string; // Or potentially a more complex structure representing redacted content
+}
+
+/** Options for configuring the AI detection process. */
+interface AIDetectionOptions {
+  sensitivityLevel: number; // e.g., 0-100
+  redactPII: boolean;
+  redactFinancial: boolean;
+  redactDates: boolean;
+  // Add other potential options (e.g., custom patterns, specific models)
+}
+
+/**
+ * Placeholder class for the AI Redaction Service.
+ * In a real implementation, this service would interact with a backend AI model
+ * (like Ollama, spaCy, or a cloud service) to detect sensitive data.
+ * Currently, it returns mock data or performs basic checks.
+ */
 export class AIService {
   private static instance: AIService;
-  private ollamaEndpoint: string;
+  // private ollamaEndpoint: string; // Removed Ollama endpoint reference
 
   private constructor() {
-    this.ollamaEndpoint = 'http://localhost:11434/api/generate';
+    // this.ollamaEndpoint = 'http://localhost:11434/api/generate'; // Removed Ollama endpoint reference
+    console.log("AIService initialized (Placeholder)");
   }
 
+  /** Gets the singleton instance of the AIService. */
   public static getInstance(): AIService {
     if (!AIService.instance) {
       AIService.instance = new AIService();
@@ -28,49 +52,75 @@ export class AIService {
     return AIService.instance;
   }
 
+  /**
+   * Detects sensitive data in the processed document based on the provided options.
+   * This is currently a placeholder and should be implemented to call a real AI backend.
+   *
+   * @param document The processed document data from DocumentService.
+   * @param options Configuration for the detection (sensitivity, categories).
+   * @returns A promise resolving to the RedactionResult.
+   */
   public async detectSensitiveData(
     document: ProcessedDocument,
-    options: {
-      sensitivityLevel: number;
-      showPII: boolean;
-      showFinancial: boolean;
-      showDates: boolean;
-    }
+    options: AIDetectionOptions
   ): Promise<RedactionResult> {
+    console.log("AIService.detectSensitiveData called (Placeholder) with options:", options);
     const { text, entities } = document;
-    const redactions: RedactionResult['redactions'] = [];
+    const { sensitivityLevel, redactPII, redactFinancial, redactDates } = options;
 
-    // First pass: Use spaCy entities
-    for (const entity of entities) {
-      if (this.shouldRedactEntity(entity, options)) {
-        redactions.push({
-          id: `entity-${entity.start}-${entity.end}`,
+    // --- Placeholder Logic --- 
+    // This is a basic example using only the pre-extracted entities from DocumentService.
+    // A real implementation would likely call a backend service with the full text.
+    const mockRedactions: RedactionItem[] = entities
+      .filter(entity => {
+          // Basic filtering based on type and options (adjust confidence check as needed)
+          const confidenceThreshold = 0.5 + (sensitivityLevel - 50) / 100; // Example threshold adjustment
+          if (entity.confidence < confidenceThreshold) return false;
+          
+          if (entity.type === 'EMAIL' && redactPII) return true;
+          if (entity.type === 'PHONE' && redactPII) return true;
+          // Add checks for other entity types (URL, potentially others if DocumentService is extended)
+          // Add checks for Financial, Dates if DocumentService extracts them
+          return false; // Default to not redacting unknown types
+      })
+      .map((entity, index) => ({
+          id: `mock-${index}-${entity.start}`,
           text: entity.text,
           type: entity.type,
-          confidence: entity.confidence,
+          confidence: entity.confidence * 100, // Convert back to percentage for display?
           start: entity.start,
           end: entity.end,
-          needsReview: entity.confidence < 0.8
-        });
-      }
-    }
+          needsReview: entity.confidence < 0.8, // Example review flag logic
+      }));
 
-    // Second pass: Use Ollama for context-aware detection
-    const ollamaRedactions = await this.detectWithOllama(text, options);
-    redactions.push(...ollamaRedactions);
+    // Simulate applying redactions (replace with block characters)
+    const redactedText = this.applyMockRedactions(text, mockRedactions);
+    
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500)); 
 
-    // Sort redactions by start position
-    redactions.sort((a, b) => a.start - b.start);
-
-    // Generate redacted text
-    const redactedText = this.applyRedactions(text, redactions);
+    console.log("AIService.detectSensitiveData returning mock results:", mockRedactions);
 
     return {
-      redactions,
-      redactedText
+      redactions: mockRedactions,
+      redactedText: redactedText,
     };
   }
 
+  /** Placeholder function to apply redactions to text (replace with blocks). */
+  private applyMockRedactions(text: string, redactions: RedactionItem[]): string {
+    let result = text.split(''); // Work with array for easier replacement
+    for (const redaction of redactions) {
+      for (let i = redaction.start; i < redaction.end; i++) {
+         if (i < result.length) { // Boundary check
+             result[i] = '█';
+         }
+      }
+    }
+    return result.join('');
+  }
+
+  /* // Removed Ollama/fetch logic
   private shouldRedactEntity(
     entity: ProcessedDocument['entities'][0],
     options: {
@@ -114,22 +164,7 @@ export class AIService {
         },
         body: JSON.stringify({
           model: 'llama2',
-          prompt: `Analyze the following text for sensitive information. Return a JSON array of objects with the following structure:
-          {
-            "text": "the sensitive text",
-            "type": "PII|FINANCIAL|DATE",
-            "confidence": 0.0-1.0,
-            "start": character_position,
-            "end": character_position
-          }
-          
-          Text to analyze: ${text}
-          
-          Options:
-          - Sensitivity level: ${options.sensitivityLevel}
-          - Show PII: ${options.showPII}
-          - Show financial: ${options.showFinancial}
-          - Show dates: ${options.showDates}`,
+          prompt: `Analyze the following text for sensitive information...`,
         }),
       });
 
@@ -156,4 +191,5 @@ export class AIService {
 
     return result;
   }
+  */
 } 
