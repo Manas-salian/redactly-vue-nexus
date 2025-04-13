@@ -127,11 +127,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="bg-white border-b border-border">
+      <header className="bg-white dark:bg-background border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <FileWarning className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-semibold">Redactly</h1>
+            <h1 className="text-xl font-semibold text-foreground">Redactly</h1>
           </div>
           
           {documentUrl && (
