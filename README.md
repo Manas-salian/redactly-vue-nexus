@@ -1,73 +1,136 @@
-# Welcome to your Lovable project
+# Redactly - AI-Powered Document Redaction
 
-## Project info
+Redactly is a secure, full-stack web application that uses AI to detect and redact sensitive data (PII/PHI) from documents such as DOCX and PDF. The tool supports multiple redaction levels, provides review and verification with confidence scores and annotations, and ensures full compliance with on-premises security standards.
 
-**URL**: https://lovable.dev/projects/061ac216-a910-4396-9822-13c2e05a4f54
+## Features
 
-## How can I edit this code?
+### Intelligent Redaction Engine
+- **Detection & Redaction**
+  - Named Entity Recognition using spaCy
+  - Context-aware AI detection using Ollama
+  - Regex-based pattern matching
+  - Custom AI models for different industries
 
-There are several ways of editing your application.
+- **Redaction Levels**
+  - Blackout: Completely remove sensitive data
+  - De-identification: Anonymize PII for research use
 
-**Use Lovable**
+### Review & Verification
+- Automatic confidence scoring for each redaction
+- Manual review workflow for low-confidence redactions
+- Highlighting and annotations for redacted sections
+- Approval/rejection system for redactions
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/061ac216-a910-4396-9822-13c2e05a4f54) and start prompting.
+### Compliance & Security
+- On-premises deployment
+- Detailed audit logs
+- Version control
+- Compliance tracking
 
-Changes made via Lovable will be committed automatically to this repo.
+### Document Handling
+- Support for DOCX and PDF documents
+- OCR capabilities using Tesseract.js
+- Text extraction and processing
+- Responsive preview interface
 
-**Use your preferred IDE**
+## Technical Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Frontend
+- React.js with TypeScript
+- Vite for build tooling
+- Tailwind CSS for styling
+- shadcn/ui components
+- React Query for state management
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Backend Services
+- Document Processing Service
+  - PDF.js for PDF handling
+  - Mammoth.js for DOCX processing
+  - Tesseract.js for OCR
+  - spaCy for NLP
 
-Follow these steps:
+- AI Service
+  - Ollama for AI-powered detection
+  - Custom redaction models
+  - Confidence scoring
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## Getting Started
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Prerequisites
+- Node.js 18+
+- Ollama (for AI capabilities)
+- Python 3.8+ (for spaCy)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Installation
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/redactly-vue-nexus.git
+cd redactly-vue-nexus
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up Ollama:
+```bash
+# Install Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Pull the required model
+ollama pull llama2
+```
+
+4. Set up spaCy:
+```bash
+pip install spacy
+python -m spacy download en_core_web_sm
+```
+
+5. Start the development server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Usage
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. Upload a document (PDF or DOCX)
+2. Configure redaction settings:
+   - Select redaction mode (blackout or de-identification)
+   - Adjust sensitivity level
+   - Choose which types of data to redact
+3. Review and verify redactions:
+   - Check confidence scores
+   - Add annotations
+   - Approve or reject redactions
+4. Download the redacted document
 
-**Use GitHub Codespaces**
+## Security Considerations
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- All processing happens on-premises
+- No data is sent to external servers
+- Documents are processed in memory
+- Secure handling of sensitive data
+- Audit logging for compliance
 
-## What technologies are used for this project?
+## Contributing
 
-This project is built with:
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## License
 
-## How can I deploy this project?
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Simply open [Lovable](https://lovable.dev/projects/061ac216-a910-4396-9822-13c2e05a4f54) and click on Share -> Publish.
+## Acknowledgments
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+- [spaCy](https://spacy.io/) for NLP capabilities
+- [Ollama](https://ollama.ai/) for AI model hosting
+- [Tesseract.js](https://github.com/naptha/tesseract.js) for OCR
+- [PDF.js](https://mozilla.github.io/pdf.js/) for PDF processing
+- [Mammoth.js](https://github.com/mwilliamson/mammoth.js) for DOCX processing

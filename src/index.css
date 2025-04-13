@@ -1,7 +1,58 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* Tailwind can't handle these specific PDF styles, so keep them */
+.react-pdf__Page__textContent {
+  @apply select-text opacity-50;
+  color: black !important;
+}
+
+.react-pdf__Page__annotations {
+  @apply pointer-events-none;
+}
+
+.react-pdf__Page {
+  @apply flex justify-center;
+}
+
+/* Override focus styles for better accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-gray-900;
+}
+
+/* Ensure proper rendering in dark mode */
+.dark .react-pdf__Page {
+  background-color: white !important;
+}
+
+/* Basic animation for UI elements */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
 
 @layer base {
   :root {
@@ -68,7 +119,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-gray-200 dark:border-gray-700;
   }
 
   body {
@@ -84,23 +135,23 @@
 
 @layer components {
   .redacted-blackout {
-    @apply bg-redaction-blackout text-transparent select-none cursor-pointer transition-all hover:bg-opacity-90;
+    @apply bg-black text-transparent select-none cursor-pointer transition-all hover:bg-opacity-90;
   }
   
   .redacted-deidentify {
-    @apply bg-redaction-deidentify text-transparent select-none cursor-pointer backdrop-blur-sm transition-all hover:bg-opacity-70;
+    @apply bg-gray-300 text-transparent select-none cursor-pointer backdrop-blur-sm transition-all hover:bg-opacity-70;
   }
   
   .redacted-highlight {
-    @apply bg-redaction-highlight bg-opacity-30 transition-all hover:bg-opacity-50 cursor-pointer;
+    @apply bg-yellow-300 bg-opacity-30 transition-all hover:bg-opacity-50 cursor-pointer;
   }
   
   .redacted-review {
-    @apply border-2 border-redaction-review rounded px-1 cursor-pointer;
+    @apply border-2 border-red-500 rounded px-1 cursor-pointer;
   }
   
   .document-container {
-    @apply border border-border rounded-md bg-white shadow-sm overflow-hidden;
+    @apply border border-gray-200 dark:border-gray-700 rounded-md bg-white shadow-sm overflow-hidden;
   }
   
   .confidence-high {

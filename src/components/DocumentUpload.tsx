@@ -1,109 +1,81 @@
-
-import React, { useState, useRef } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, FileText, AlertTriangle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
+import { Upload, FileText, AlertCircle } from 'lucide-react';
+import { useDocumentProcessor } from '@/hooks/useDocumentProcessor';
+import { toast } from 'sonner';
 
 interface DocumentUploadProps {
-  onFileUpload: (file: File) => void;
+  onDocumentProcessed: (file: File) => void;
 }
 
-const DocumentUpload: React.FC<DocumentUploadProps> = ({ onFileUpload }) => {
-  const [isDragging, setIsDragging] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
+const DocumentUpload: React.FC<DocumentUploadProps> = ({ onDocumentProcessed }) => {
+  const { processDocument, isLoading, error } = useDocumentProcessor();
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
 
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const file = e.dataTransfer.files[0];
-      validateAndSetFile(file);
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      validateAndSetFile(file);
-    }
-  };
-
-  const validateAndSetFile = (file: File) => {
-    const fileType = file.name.split('.').pop()?.toLowerCase();
-    
-    if (fileType !== 'pdf' && fileType !== 'docx') {
-      toast({
-        title: "Invalid file format",
-        description: "Please upload PDF or DOCX files only",
-        variant: "destructive"
-      });
+    const file = acceptedFiles[0];
+    if (!file.type.includes('pdf') && !file.type.includes('docx')) {
+      toast.error('Please upload a PDF or DOCX file');
       return;
     }
-    
-    setSelectedFile(file);
-    onFileUpload(file);
-  };
 
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
+    try {
+      await processDocument(file);
+      onDocumentProcessed(file);
+      toast.success('Document processed successfully');
+    } catch (err) {
+      toast.error('Failed to process document');
+    }
+  }, [processDocument, onDocumentProcessed]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+    },
+    maxFiles: 1
+  });
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardContent className="p-6">
         <div
-          className={`flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-10 transition-colors ${
-            isDragging ? 'border-primary bg-primary/5' : 'border-border'
-          }`}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          {...getRootProps()}
+          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+            ${isDragActive ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary'}`}
         >
-          <input
-            type="file"
-            accept=".pdf,.docx"
-            className="hidden"
-            onChange={handleFileChange}
-            ref={fileInputRef}
-          />
+          <input {...getInputProps()} />
           
-          {selectedFile ? (
-            <div className="text-center animate-fade-in">
-              <FileText className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-1">{selectedFile.name}</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-              </p>
-              <Button onClick={handleButtonClick} variant="outline" className="mt-2">
-                Choose another file
-              </Button>
+          {isLoading ? (
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4" />
+              <p className="text-muted-foreground">Processing document...</p>
             </div>
           ) : (
             <>
-              <Upload className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-1">Drop your document here</h3>
-              <p className="text-sm text-muted-foreground text-center mb-4">
+              <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-lg font-medium mb-2">
+                {isDragActive ? 'Drop the file here' : 'Drag and drop your document here'}
+              </p>
+              <p className="text-sm text-muted-foreground mb-4">
                 Supported formats: PDF, DOCX
               </p>
-              <Button onClick={handleButtonClick}>Select File</Button>
-              <div className="flex items-center mt-6 text-sm text-muted-foreground">
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                <span>Max file size: 10MB</span>
-              </div>
+              <Button variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Select File
+              </Button>
             </>
+          )}
+
+          {error && (
+            <div className="mt-4 flex items-center justify-center text-destructive">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              <span>{error}</span>
+            </div>
           )}
         </div>
       </CardContent>
