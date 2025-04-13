@@ -76,6 +76,12 @@
   }
 }
 
+@layer utilities {
+  .text-foreground {
+    color: hsl(var(--foreground));
+  }
+}
+
 @layer components {
   .redacted-blackout {
     @apply bg-redaction-blackout text-transparent select-none cursor-pointer transition-all hover:bg-opacity-90;
