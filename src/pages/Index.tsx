@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import DocumentUpload from '@/components/DocumentUpload';
 import DocumentPreview from '@/components/DocumentPreview';
 import RedactionControls from '@/components/RedactionControls';
-import RedactionDetailsPanel from '@/components/RedactionDetailsPanel';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { FileWarning, Upload } from 'lucide-react';
+import { FileWarning, Upload, Eye } from 'lucide-react';
 
 // Mock data for redactions
 const MOCK_REDACTIONS = {
@@ -32,6 +32,8 @@ const MOCK_REDACTIONS = {
 };
 
 const Index = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [currentTab, setCurrentTab] = useState('upload');
   const [documentUrl, setDocumentUrl] = useState<string | undefined>();
   const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +47,18 @@ const Index = () => {
   const [redactions, setRedactions] = useState<Record<string, any>>(MOCK_REDACTIONS);
   
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check if we're returning from the preview page with a processed document
+    if (location.state && location.state.documentProcessed) {
+      toast({
+        title: "Document finalized",
+        description: "Your redacted document has been finalized and saved."
+      });
+      // Clear the state to prevent showing the toast again on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, toast]);
 
   const handleFileUpload = (file: File) => {
     // In a real app, this would create a URL for the file
@@ -88,40 +102,14 @@ const Index = () => {
     }, 2000);
   };
 
-  const handleRedactionClick = (id: string) => {
-    setSelectedRedactionId(id);
-  };
-
-  const handleApproveRedaction = (id: string) => {
-    toast({
-      title: "Redaction approved",
-      description: `The redaction for "${redactions[id].text}" has been approved.`
-    });
-    
-    // In a real app, this would update the redaction status in the backend
-  };
-
-  const handleRejectRedaction = (id: string) => {
-    toast({
-      title: "Redaction rejected",
-      description: `The redaction for "${redactions[id].text}" has been rejected.`
-    });
-    
-    // In a real app, this would update the redaction status in the backend
-  };
-
-  const handleAddAnnotation = (id: string, annotation: string) => {
-    setRedactions(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        annotations: [...(prev[id].annotations || []), annotation]
+  const handleViewFullPreview = () => {
+    navigate('/preview', {
+      state: {
+        documentUrl,
+        redactionMode,
+        selectedRedactionId,
+        redactions,
       }
-    }));
-    
-    toast({
-      title: "Annotation added",
-      description: "Your annotation has been saved."
     });
   };
 
@@ -161,12 +149,12 @@ const Index = () => {
           <TabsContent value="upload" className="space-y-6 animate-fade-in">
             <div className="grid gap-6 md:grid-cols-2">
               <div>
-                <h2 className="text-lg font-medium mb-4">Upload Document</h2>
+                <h2 className="text-lg font-medium mb-4 text-foreground">Upload Document</h2>
                 <DocumentUpload onFileUpload={handleFileUpload} />
               </div>
               
               <div>
-                <h2 className="text-lg font-medium mb-4">Redaction Settings</h2>
+                <h2 className="text-lg font-medium mb-4 text-foreground">Redaction Settings</h2>
                 <RedactionControls 
                   redactionMode={redactionMode}
                   onRedactionModeChange={handleRedactionModeChange}
@@ -185,7 +173,7 @@ const Index = () => {
             </div>
             
             <div>
-              <h2 className="text-lg font-medium mb-4">Document Preview</h2>
+              <h2 className="text-lg font-medium mb-4 text-foreground">Document Preview</h2>
               <DocumentPreview 
                 documentUrl={documentUrl}
                 isLoading={isLoading}
@@ -195,25 +183,19 @@ const Index = () => {
           </TabsContent>
           
           <TabsContent value="review" className="space-y-6 animate-fade-in">
-            <div className="grid gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <h2 className="text-lg font-medium mb-4">Redacted Document</h2>
-                <DocumentPreview 
-                  documentUrl={documentUrl}
-                  redactionMode={redactionMode}
-                  onRedactionClick={handleRedactionClick}
-                />
-              </div>
-              
-              <div>
-                <h2 className="text-lg font-medium mb-4">Redaction Details</h2>
-                <RedactionDetailsPanel 
-                  selectedRedaction={selectedRedactionId ? redactions[selectedRedactionId] : null}
-                  onApprove={handleApproveRedaction}
-                  onReject={handleRejectRedaction}
-                  onAddAnnotation={handleAddAnnotation}
-                />
-              </div>
+            <div className="flex justify-end mb-4">
+              <Button 
+                onClick={handleViewFullPreview}
+                className="flex items-center"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Full Preview
+              </Button>
+            </div>
+            
+            <div className="text-center p-12 border border-dashed rounded-md">
+              <Eye className="h-16 w-16 mx-auto text-muted-foreground" />
+              <p className="mt-4 text-muted-foreground">Click the button above to view the full document preview with redactions</p>
             </div>
           </TabsContent>
         </Tabs>
