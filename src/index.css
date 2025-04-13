@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -63,19 +64,15 @@
     --sidebar-border: 240 4% 16%;
     --sidebar-ring: 217 91% 60%;
   }
+}
 
+@layer base {
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-@layer utilities {
-  .text-foreground {
-    color: hsl(var(--foreground));
   }
 }
 
